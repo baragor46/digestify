@@ -1,4 +1,4 @@
-import { Button, Grid, TextField, Typography } from "@mui/material";
+import { Button, CircularProgress, Grid, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 
 const MainPage = () => {
@@ -6,14 +6,37 @@ const MainPage = () => {
 
   const [url, setUrl] = useState("");
 
-  const [summarizedText, setSummarizedText] = useState("");
+  const [isLoading, setIsLoading] = useState(false)
+
+  const [summarizedText, setSummarizedText] = useState({
+    author: "",
+    title: "",
+    summary: "",
+  });
   const handleUrlChanged = (e) => {
     setUrl(e.target.value);
   };
 
-  const handleDigestify = () => {
+  const handleDigestify = async () => {
+    setIsLoading(true)
+   
+    const requestOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: url }),
+    };
+    const response = await fetch(
+      "http://127.0.0.1:5000/digestify",
+      requestOptions
+    );
+    const data = await response.json();
+
+    const article = data.article;
+
+    setSummarizedText(article);
+    setIsLoading(false)
     setSummarized(true);
-    setSummarizedText(url);
+
   };
 
   return (
@@ -33,18 +56,35 @@ const MainPage = () => {
           Digestify!
         </Button>
       </Grid>
-      {isSummarized && <SummarizedText text={summarizedText} />}
+      {isLoading && 
+        <Grid item xs={12}>
+            <CircularProgress />
+        </Grid>
+      }
+      {isSummarized && (
+        <SummarizedText
+          author={summarizedText.author}
+          title={summarizedText.title}
+          text={summarizedText.summary}
+        />
+      )}
     </Grid>
   );
 };
 
-const SummarizedText = ({ text }) => {
+const SummarizedText = ({ author, title, text }) => {
   return (
     <>
       <Grid item xs={12} style={{ textAlign: "center", marginTop: "2rem" }}>
         <Typography variant="h5" alignContent={"center"}>
           Summarized article:
         </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <Typography>Author: {author}</Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <Typography>Title: {title}</Typography>
       </Grid>
       <Grid item xs={12}>
         <TextField
